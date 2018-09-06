@@ -151,8 +151,8 @@ static gboolean copy_raw_image(RaucImage *image, GUnixOutputStream *outstream, G
 
 	/* flush to block device before closing to assure content is written to disk */
 	if (fsync(out_fd) == -1) {
-		close(out_fd); /* Silent attempt to close as we failed, anyway */
 		g_set_error(error, R_UPDATE_ERROR, R_UPDATE_ERROR_FAILED, "Syncing content to disk failed: %s", strerror(errno));
+		close(out_fd); /* Silent attempt to close as we failed, anyway */
 		return FALSE;
 	}
 
