@@ -108,6 +108,16 @@ AC_CHECK_HEADER([linux/mmc/ioctl.h],
 
 AM_CONDITIONAL([WANT_EMMC_BOOT_SUPPORT], [test x$ac_cv_header_linux_mmc_ioctl_h != xno])
 
+AC_ARG_ENABLE([sendfile],
+       AS_HELP_STRING([--disable-sendfile], [Disable use of sendfile system call])
+)
+AC_CHECK_HEADER([sys/sendfile.h], [], [enable_sendfile=no])
+AS_IF([test "x$enable_sendfile" != "xno"], [
+       AC_DEFINE([ENABLE_SENDFILE], [1], [Define to 1 to enable use of sendfile system call])
+], [
+       AC_DEFINE([ENABLE_SENDFILE], [0])
+])
+
 # Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.

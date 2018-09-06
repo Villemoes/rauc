@@ -3,6 +3,11 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#if ENABLE_SENDFILE
+#include <sys/sendfile.h>
+#endif
 
 #include "utils.h"
 
@@ -170,3 +175,55 @@ gchar * key_file_consume_string(
 	return result;
 }
 
+#if ENABLE_SENDFILE
+gssize fd_copy_full(int out_fd, int in_fd, GError **error)
+{
+	gssize total = 0;
+	gssize copied;
+
+	while (1) {
+		copied = sendfile(out_fd, in_fd, NULL, 256*1024*1024);
+		if (copied < 0) {
+			g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED,
+				    "sendfile failed: %s", strerror(errno));
+			return -1;
+		}
+		if (!copied)
+			break;
+		total += copied;
+	}
+	return total;
+}
+#else
+gssize fd_copy_full(int out_fd, int in_fd, GError **error)
+{
+	gssize total = 0;
+	gssize r, w;
+	char buf[8192];
+	char *p;
+
+	while (1) {
+		r = read(fd_in, buf, sizeof(buf));
+		if (r < 0) {
+			g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED,
+				    "read failed: %s", strerror(errno));
+			return -1;
+		}
+		if (!r)
+			break;
+		total += r;
+		p = buf;
+		while (r) {
+			w = write(fd_out, p, r);
+			if (w < 0) {
+				g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED,
+					    "write failed: %s", strerror(errno));
+				return -1;
+			}
+			r -= w;
+			p += w;
+		}
+	}
+	return total;
+}
+#endif

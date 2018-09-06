@@ -100,3 +100,14 @@ gchar * key_file_consume_string(
 		const gchar *group_name,
 		const gchar *key,
 		GError **error);
+
+/**
+ * Copy from in_fd to out_fd until reaching EOF.
+ *
+ * @param out_fd Destination file descriptor
+ * @param in_fd Source file descriptor
+ * @param error return location for a GError, or NULL
+ *
+ * @return Total number of bytes copied on success, -1 if an error occurred
+ */
+gssize fd_copy_full(int out_fd, int in_fd, GError **error);
